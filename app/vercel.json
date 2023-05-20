@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/queueUserIds?apiKey=7656624226ce468e8f511f196fda5906",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/pollSocialPosts?apiKey=7656624226ce468e8f511f196fda5906",
+      "schedule": "* * * * *"
+    }
+  ]
+}
