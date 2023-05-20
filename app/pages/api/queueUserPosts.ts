@@ -4,7 +4,7 @@ import { AxiomAPIRequest, withAxiom } from "next-axiom";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Client } from "@notionhq/client";
 import { InstagramPost, PostStatus } from "../../types/supabaseTypes";
-import { rateLimiter } from "../../utils/utils";
+import { handleError, qStashClient, rateLimiter } from "../../utils/utils";
 
 type NotionMultiSelectType = {
   id: string;
@@ -330,13 +330,19 @@ const processPages = async (
       );
 
       await Promise.all(
-        postsToDelete.map(async (post: { id: string }) => {
-          const { error } = await deletePostFromDatabase(
-            post.id,
-            supabaseClient,
-            req
+        postsToDelete.map(async (post: InstagramPost) => {
+          const res = await qStashClient.publishJSON({
+            url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/deleteSocialPost?apiKey=${process.env.API_KEY}`,
+            // or topic: "the name or id of a topic"
+            body: {
+              postId: post.id,
+            },
+            retries: 0,
+          });
+
+          req.log.info(
+            `[api/queueUserPosts] Successfully sent delete request for message ${res.messageId}`
           );
-          if (error) throw error;
         })
       );
     }
@@ -378,7 +384,6 @@ const writePostToDatabase = async (
   >,
   req: AxiomAPIRequest
 ) => {
-  let responseError;
   try {
     req.log.info(`[api/queueUserPosts] Starting writePostInDatabase `, {
       parameters: {
@@ -398,42 +403,38 @@ const writePostToDatabase = async (
           socialAccountMap[account.name];
 
         const timeToPostDate = new Date(publicationDate.start);
-        req.log.info(
-          `[api/queueUserPosts][writePostToDatabase] Attempting to write post into database for account ${JSON.stringify(
-            account
-          )}`
-        );
-        const { error } = await supabaseClient.from("InstagramPosts").insert({
-          instagram_account_id: instagramAccountId,
-          access_token: accessToken,
-          time_to_post: timeToPostDate.toISOString(),
-          notion_page_id: notionPageId,
-          status: PostStatus.QUEUED,
-          user_id: userId,
+
+        const res = await qStashClient.publishJSON({
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/createSocialPost?apiKey=${process.env.API_KEY}`,
+          // or topic: "the name or id of a topic"
+          body: {
+            publicationDate: timeToPostDate.toISOString(),
+            instagramAccountId,
+            accessToken,
+            pageId: page.id,
+            userId,
+          },
+          retries: 0,
         });
-        if (error) throw error;
+
         req.log.info(
-          "[api/queueUserPosts][writePostToDatabase] Successfully wrote post into database",
-          {
-            post: JSON.stringify({
-              instagram_account_id: instagramAccountId,
-              access_token: accessToken,
-              time_to_post: timeToPostDate.toISOString(),
-              notion_page_id: notionPageId,
-              status: PostStatus.QUEUED,
-              user_id: userId,
-            }),
-          }
+          `[api/queueUserPosts] Successfully sent message ${res.messageId}`
         );
       })
     );
+
+    return { error: null };
   } catch (error: any) {
-    req.log.error(
-      `[api/queueUserPosts][writePostToDatabase]: Failed writing post into database ${error.message}`
+    return handleError(
+      req.log,
+      `[api/queueUserPosts][writePostToDatabase]: Failed writing post into database`,
+      error,
+      {
+        notionPageId,
+        userId,
+        socialAccountMap,
+      }
     );
-    responseError = error;
-  } finally {
-    return { error: responseError };
   }
 };
 
@@ -470,24 +471,26 @@ const updatePostInDatabase = async (
         }
       }
     );
-    req.log.info(
-      "[api/queueUserPosts] accountIdsToPostTo: ",
-      accountIdsToPostTo
-    );
-    req.log.info("[api/queueUserPosts] queuedPostIds: ", queuedPosts);
 
     await Promise.all(
       queuedPosts.map(async (post: InstagramPost) => {
         if (!accountIdsToPostTo.includes(post.instagram_account_id)) {
-          const { error } = await deletePostFromDatabase(
-            post.id,
-            supabaseClient,
-            req
+          const res = await qStashClient.publishJSON({
+            url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/deleteSocialPost?apiKey=${process.env.API_KEY}`,
+            // or topic: "the name or id of a topic"
+            body: {
+              postId: post.id,
+            },
+            retries: 0,
+          });
+
+          req.log.info(
+            `[api/queueUserPosts] Successfully sent delete request for message ${res.messageId}`
           );
-          if (error) throw error;
         }
       })
     );
+
     accountsToPostTo.map(async (account: NotionMultiSelectType) => {
       const { social_id: instagramAccountId, access_token: accessToken } =
         socialAccountMap[account.name];
@@ -499,77 +502,38 @@ const updatePostInDatabase = async (
       if (!post) return;
 
       const timeToPostDate = new Date(publicationDate.start);
-      const { data, error } = await supabaseClient
-        .from("InstagramPosts")
-        .update({
-          instagram_account_id: instagramAccountId,
-          access_token: accessToken,
-          time_to_post: timeToPostDate.toISOString(),
-          notion_page_id: page.id,
-          status: PostStatus.QUEUED,
-          user_id: userId,
-        })
-        .eq("id", post.id)
-        .select();
-      if (error) throw error;
-      req.log.info(`[api/queueUserPosts] Completed updatePostInDatabase`, {
-        parameters: {
-          page: JSON.stringify(page),
-          socialAccountMap: JSON.stringify(socialAccountMap),
+
+      const res = await qStashClient.publishJSON({
+        url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/updateSocialPost?apiKey=${process.env.API_KEY}`,
+        // or topic: "the name or id of a topic"
+        body: {
+          publicationDate: timeToPostDate.toISOString(),
+          instagramAccountId,
+          accessToken,
+          pageId: page.id,
           userId,
-          queuedPosts: JSON.stringify(queuedPosts),
+          postId: post.id,
         },
-        data: JSON.stringify(data),
+        retries: 0,
       });
+
+      req.log.info(
+        `[api/queueUserPosts] Successfully sent update request for message ${res.messageId}`
+      );
     });
     return { error: null };
   } catch (error: any) {
-    req.log.error(`[api/queueUserPosts] Error on updatePostInDatabase`, {
-      error: error.message,
-      parameters: {
+    return handleError(
+      req.log,
+      `[api/queueUserPosts] Error on updatePostInDatabase`,
+      error,
+      {
         page: JSON.stringify(page),
         socialAccountMap: JSON.stringify(socialAccountMap),
         userId,
         queuedPosts: JSON.stringify(queuedPosts),
-      },
-    });
-    return { error };
-  }
-};
-
-const deletePostFromDatabase = async (
-  postId: string,
-  supabaseClient: SupabaseClient,
-  req: AxiomAPIRequest
-) => {
-  req.log.info(`[api/queueUserPosts] Starting deletePostFromDatabase`, {
-    parameters: {
-      postId,
-    },
-  });
-  try {
-    req.log.info(
-      `[api/queueUserPosts][deletePostFromDatabase] Attempting to delete post from database with id: ${postId}`
+      }
     );
-    const { error } = await supabaseClient
-      .from("InstagramPosts")
-      .delete()
-      .eq("id", postId);
-    if (error) throw error;
-    req.log.info(`[api/queueUserPosts] Completed deletePostFromDatabase`, {
-      parameters: {
-        postId,
-      },
-    });
-    return { error: null };
-  } catch (error: any) {
-    req.log.error(`[api/queueUserPosts] Error on deletePostFromDatabase`, {
-      error: error.message,
-      parameters: {
-        postId,
-      },
-    });
-    return { error };
   }
 };
 

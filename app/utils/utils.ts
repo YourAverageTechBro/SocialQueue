@@ -1,7 +1,8 @@
 import { RateLimit } from "async-sema";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { PostStatus } from "../types/supabaseTypes";
-import { AxiomAPIRequest } from "next-axiom";
+import { AxiomAPIRequest, Logger } from "next-axiom";
+import { Client as QStashClient } from "@upstash/qstash";
 
 export const rateLimiter = RateLimit(1, {
   timeUnit: 1000,
@@ -47,3 +48,26 @@ export const updateInstagramPostStatus = async (
     return { error };
   }
 };
+
+export const handleError = (
+  log: Logger,
+  errorMessagePrefix: string,
+  error: any,
+  parameters: Record<string, any>
+) => {
+  log.error(errorMessagePrefix, {
+    error: error.message,
+    parameters,
+  });
+  return { data: null, error };
+};
+
+export const qStashClient = new QStashClient({
+  token: process.env.QSTASH_TOKEN ?? "",
+});
+
+export const supabaseClient = createClient(
+  // Supabase API URL - env var exported by default when deployed.
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+  process.env.SUPABASE_SERVICE_ROLE_SECRET ?? ""
+);
