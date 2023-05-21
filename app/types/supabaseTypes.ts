@@ -36,6 +36,7 @@ export type InstagramPost = {
   media_urls: string;
   instagram_account_id: string;
   media_type: InstagramMediaType;
+  instagram_container_id: string;
 };
 
 export enum PostStatus {
