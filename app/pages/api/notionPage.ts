@@ -2,8 +2,7 @@ import { Client as QStashClient } from "@upstash/qstash";
 import type { NextApiResponse } from "next";
 import { AxiomAPIRequest, withAxiom } from "next-axiom";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { InstagramPost, PostStatus } from "../../types/supabaseTypes";
-import { updateInstagramPostStatus } from "../../utils/utils";
+import { InstagramPost } from "../../types/supabaseTypes";
 import { Client } from "@notionhq/client";
 import { ListBlockChildrenResponse } from "@notionhq/client/build/src/api-endpoints";
 import { verifySignature } from "@upstash/qstash/nextjs";
@@ -23,15 +22,6 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
         process.env.SUPABASE_SERVICE_ROLE_SECRET ?? ""
       );
 
-      const { error: updateInstagramPostStatusError } =
-        await updateInstagramPostStatus(
-          post.id,
-          supabaseClient,
-          PostStatus.PROCESSING,
-          "api/notionPage",
-          req
-        );
-      if (updateInstagramPostStatusError) throw updateInstagramPostStatusError;
       const { error } = await processNotionPage(
         post,
         userId,

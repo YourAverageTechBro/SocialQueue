@@ -225,14 +225,16 @@ const uploadMediaToSupabase = async (
 
     req.log.info("[api/mediaUpload] Attempting to upload media to supabase");
     const { data: uploadData, error: uploadError } =
-      await supabaseClient.storage.from(userId).upload(notionPageId, blob, {
-        cacheControl: "3600",
-        upsert: true,
-      });
+      await supabaseClient.storage
+        .from(userId)
+        .upload(`${notionPageId}/${mediaUrl}`, blob, {
+          cacheControl: "3600",
+          upsert: true,
+        });
     if (uploadError) {
       return handleError(
         req.log,
-        `[api/mediaUpload] Error on uploadMediaToSupabase`,
+        `[api/mediaUpload] Error uploading file to Supabase`,
         uploadError,
         {
           mediaUrl,
@@ -248,11 +250,11 @@ const uploadMediaToSupabase = async (
     const { data: signedUrl, error: signedUrlError } =
       await supabaseClient.storage
         .from(userId)
-        .createSignedUrl(notionPageId, 300);
+        .createSignedUrl(`${notionPageId}/${mediaUrl}`, 300);
     if (signedUrlError) {
       return handleError(
         req.log,
-        `[api/mediaUpload] Error on uploadMediaToSupabase`,
+        `[api/mediaUpload] Error on getting signed url`,
         signedUrlError,
         {
           mediaUrl,
