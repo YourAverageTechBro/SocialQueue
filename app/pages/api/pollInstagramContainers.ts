@@ -20,7 +20,7 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
         `access_token, id, instagram_account_id, instagram_container_id, notion_page_id,
         Users(notion_access_token)`
       )
-      .eq("status", PostStatus.PROCESSING)
+      .eq("status", PostStatus.QUEUED)
       .neq("instagram_container_id", null);
 
     if (error) {

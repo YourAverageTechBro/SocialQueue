@@ -42,7 +42,6 @@ export type InstagramPost = {
 export enum PostStatus {
   QUEUED = "QUEUED",
   PUBLISHED = "PUBLISHED",
-  PROCESSING = "PROCESSING",
   FAILED = "FAILED",
 }
 
