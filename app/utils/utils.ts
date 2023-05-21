@@ -9,6 +9,59 @@ export const rateLimiter = RateLimit(1, {
   uniformDistribution: true,
 });
 
+export const updateInstagramContainerId = async (
+  instagramPostId: string,
+  instagramContainerId: string,
+  apiEndpoint: string,
+  log: Logger
+) => {
+  try {
+    log.info(
+      `[${apiEndpoint}][updateInstagramContainerId] Starting updateInstagramContainerId`,
+      {
+        parameters: {
+          instagramPostId,
+          status,
+        },
+      }
+    );
+    const { error } = await supabaseClient
+      .from("InstagramPosts")
+      .update({
+        instagram_container_id: instagramContainerId,
+      })
+      .eq("id", instagramPostId);
+    if (error) {
+      return handleError(
+        log,
+        `[${apiEndpoint}][updateInstagramContainerId] Error updating Instagram post status`,
+        error,
+        {
+          instagramPostId,
+        }
+      );
+    }
+    log.info(
+      `[${apiEndpoint}][updateInstagramContainerId] Completed updateInstagramContainerId`,
+      {
+        parameters: {
+          instagramPostId,
+        },
+      }
+    );
+    return { error: null };
+  } catch (error: any) {
+    return handleError(
+      log,
+      `[api/updateInstagramPostStatus] Error updating Instagram post status`,
+      error,
+      {
+        instagramPostId,
+      }
+    );
+  }
+};
+
 export const updateInstagramPostStatus = async (
   instagramPostId: string,
   supabaseClient: SupabaseClient,

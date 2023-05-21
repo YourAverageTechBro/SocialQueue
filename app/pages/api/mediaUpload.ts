@@ -2,8 +2,8 @@ import type { NextApiResponse } from "next";
 import { AxiomAPIRequest, withAxiom } from "next-axiom";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import fetch from "node-fetch";
-import { Client } from "@upstash/qstash";
 import { verifySignature } from "@upstash/qstash/nextjs";
+import { handleError, qStashClient } from "../../utils/utils";
 
 // TODO: clean up this file with better logging too
 async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
@@ -41,25 +41,53 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
       if (!uploadedMedia) throw Error("Uploaded media not found");
       const { uploadedPhotoUrls, uploadedVideoUrls } = uploadedMedia;
 
-      const c = new Client({
-        token: process.env.QSTASH_TOKEN ?? "",
-      });
-
-      const qStashRes = await c.publishJSON({
-        url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/instagramPoster`,
-        // or topic: "the name or id of a topic"
-        body: {
-          uploadedPhotoUrls,
-          uploadedVideoUrls,
-          socialAccount,
-          caption,
-          instagramPost,
-          notionAccessToken,
-          userId,
-        },
-        retries: 0,
-      });
-      req.log.info(`[api/mediaUpload] Post ${qStashRes.messageId} published`);
+      if (uploadedPhotoUrls.length === 1 && uploadedVideoUrls.length === 0) {
+        const qStashRes = await qStashClient.publishJSON({
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/createInstagramPhotoContainer`,
+          // or topic: "the name or id of a topic"
+          body: {
+            imageUrl: uploadedPhotoUrls[0],
+            userId: socialAccount.social_id,
+            accessToken: socialAccount.access_token,
+            caption,
+            postId: instagramPost.id,
+          },
+          retries: 0,
+        });
+        req.log.info(`[api/mediaUpload] Post ${qStashRes.messageId} published`);
+      } else if (
+        uploadedPhotoUrls.length === 0 &&
+        uploadedVideoUrls.length === 1
+      ) {
+        const qStashRes = await qStashClient.publishJSON({
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/createInstagramReelContainer`,
+          // or topic: "the name or id of a topic"
+          body: {
+            videoUrl: uploadedVideoUrls[0],
+            userId: socialAccount.social_id,
+            accessToken: socialAccount.access_token,
+            caption,
+            postId: instagramPost.id,
+          },
+          retries: 0,
+        });
+        req.log.info(`[api/mediaUpload] Post ${qStashRes.messageId} published`);
+      } else if (uploadedPhotoUrls.length + uploadedVideoUrls.length > 1) {
+        const qStashRes = await qStashClient.publishJSON({
+          url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/createInstagramCarouselContainer`,
+          // or topic: "the name or id of a topic"
+          body: {
+            videoUrls: uploadedVideoUrls,
+            imageUrls: uploadedPhotoUrls,
+            userId: socialAccount.social_id,
+            accessToken: socialAccount.access_token,
+            caption,
+            postId: instagramPost.id,
+          },
+          retries: 0,
+        });
+        req.log.info(`[api/mediaUpload] Post ${qStashRes.messageId} published`);
+      }
       req.log.info("[api/mediaUpload] Completed POST endpoint", {
         body: JSON.stringify(req.body),
       });
@@ -201,7 +229,18 @@ const uploadMediaToSupabase = async (
         cacheControl: "3600",
         upsert: true,
       });
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      return handleError(
+        req.log,
+        `[api/mediaUpload] Error on uploadMediaToSupabase`,
+        uploadError,
+        {
+          mediaUrl,
+          userId,
+          notionPageId,
+        }
+      );
+    }
     req.log.info(
       "[api/mediaUpload] Successfully uploaded media to supabase: ",
       uploadData
@@ -210,8 +249,30 @@ const uploadMediaToSupabase = async (
       await supabaseClient.storage
         .from(userId)
         .createSignedUrl(notionPageId, 300);
-    if (signedUrlError) throw signedUrlError;
-    if (!signedUrl.signedUrl) throw Error("No signed url returned");
+    if (signedUrlError) {
+      return handleError(
+        req.log,
+        `[api/mediaUpload] Error on uploadMediaToSupabase`,
+        signedUrlError,
+        {
+          mediaUrl,
+          userId,
+          notionPageId,
+        }
+      );
+    }
+    if (!signedUrl.signedUrl) {
+      return handleError(
+        req.log,
+        `[api/mediaUpload] Error on uploadMediaToSupabase`,
+        Error("No signed url returned"),
+        {
+          mediaUrl,
+          userId,
+          notionPageId,
+        }
+      );
+    }
     publicUrl = signedUrl.signedUrl;
     req.log.info(`[api/mediaUpload] Completed uploadMediaToSupabase`, {
       publicUrl,
@@ -221,18 +282,18 @@ const uploadMediaToSupabase = async (
         notionPageId,
       },
     });
+    return { data: publicUrl, error: null };
   } catch (error: any) {
-    req.log.error(`[api/mediaUpload] Error on uploadMediaToSupabase`, {
-      error: error.message,
-      parameters: {
+    return handleError(
+      req.log,
+      `[api/mediaUpload] Error on uploadMediaToSupabase`,
+      error,
+      {
         mediaUrl,
         userId,
         notionPageId,
-      },
-    });
-    responseError = error;
-  } finally {
-    return { data: publicUrl, error: responseError };
+      }
+    );
   }
 };
 
