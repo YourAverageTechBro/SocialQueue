@@ -3,7 +3,7 @@ import { verifySignature } from "@upstash/qstash/nextjs";
 import { NextApiResponse } from "next";
 import fetch from "node-fetch";
 import { Client } from "@notionhq/client";
-import { handleError, supabaseClient } from "../../utils/utils";
+import { handleError, rateLimit, supabaseClient } from "../../utils/utils";
 import { PostStatus } from "../../types/supabaseTypes";
 
 async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
@@ -44,6 +44,20 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
         notionPageId,
         postId,
       });
+      res.status(204).end();
+      return;
+    }
+
+    const { success } = await rateLimit.instagramContentPublish.limit(userId);
+
+    // TODO: Send email notification to user when rate limit is exceeded
+    if (!success) {
+      req.log.error(
+        "[api/publishInstagramContainer] Facebook publish rate limit exceeded for user",
+        {
+          userId,
+        }
+      );
       res.status(204).end();
       return;
     }
