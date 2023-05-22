@@ -45,7 +45,6 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
             userId: id,
             timestamp: fiveMinutesBeforeCurrentDate,
           },
-          retries: 0,
         });
         req.log.info(
           `[api/queueUserIds] message ${

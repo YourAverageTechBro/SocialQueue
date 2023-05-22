@@ -4,7 +4,7 @@ import { AxiomAPIRequest, withAxiom } from "next-axiom";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Client } from "@notionhq/client";
 import { InstagramPost, PostStatus } from "../../types/supabaseTypes";
-import { handleError, qStashClient, rateLimiter } from "../../utils/utils";
+import { handleError, qStashClient, rateLimit } from "../../utils/utils";
 
 type NotionMultiSelectType = {
   id: string;
@@ -19,10 +19,14 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
     });
     const { userId, timestamp } = req.body;
     if (!userId) {
-      throw Error("No userId found");
+      req.log.error("[api/queueUserPosts] Error: No user id found");
+      res.status(204).end();
+      return;
     }
     if (!timestamp) {
-      throw Error("No timestamp found");
+      req.log.error("[api/queueUserPosts] Error: No timestamp here");
+      res.status(204).end();
+      return;
     }
 
     const { error: queueUserPostsError } = await queueUserPosts(
@@ -30,7 +34,20 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
       timestamp,
       req
     );
-    if (queueUserPostsError) throw queueUserPostsError;
+
+    if (queueUserPostsError) {
+      // Retry if rate limited
+      if (queueUserPostsError.message === "Ratelimit") {
+        res.status(504).end();
+        return;
+      }
+      req.log.error(
+        `[api/queueUserPosts] Error: ${queueUserPostsError.message}`
+      );
+      res.status(204).end();
+      return;
+    }
+
     req.log.info(`[api/queueUserPosts] Completed queueUserPosts endpoint`, {
       body: JSON.stringify(req.body),
     });
@@ -234,8 +251,22 @@ const fetchNotionPages = async (
     const notion = new Client({
       auth: notionAccessToken,
     });
-    await rateLimiter();
-    const pages = (await notion.databases.query({
+
+    const { success } = await rateLimit.notionApi.limit("api");
+
+    if (!success) {
+      return handleError(
+        req.log,
+        `[api/queueUserPosts] Error on fetchNotionPages`,
+        new Error("Rate limit reached"),
+        {
+          user: JSON.stringify(user),
+          timestamp,
+        }
+      );
+    }
+
+    const resp = (await notion.databases.query({
       database_id: notionDuplicatedTemplateId,
       filter: {
         and: [
@@ -254,22 +285,36 @@ const fetchNotionPages = async (
         ],
       },
     })) as any;
+
+    if (resp.status === 429) {
+      return handleError(
+        req.log,
+        `[api/queueUserPosts] Notion API rate limit reached`,
+        new Error("Ratelimit"),
+        {
+          user: JSON.stringify(user),
+          timestamp,
+        }
+      );
+    }
+
     req.log.info(`[api/queueUserPosts] Completed fetchNotionPages`, {
       parameters: {
         user: JSON.stringify(user),
         timestamp,
       },
     });
-    return { data: pages, error: null };
+    return { data: resp, error: null };
   } catch (error: any) {
-    req.log.error(`[api/queueUserPosts] Error on fetchNotionPages`, {
-      error: error.message,
-      parameters: {
+    return handleError(
+      req.log,
+      `[api/queueUserPosts] Error on fetchNotionPages`,
+      error,
+      {
         user: JSON.stringify(user),
         timestamp,
-      },
-    });
-    return { data: null, error };
+      }
+    );
   }
 };
 
