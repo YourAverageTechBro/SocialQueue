@@ -1,17 +1,17 @@
 import { Client } from "@notionhq/client";
 import type { NextApiResponse } from "next";
-import { withAxiom, AxiomAPIRequest } from "next-axiom";
-import { rateLimiter } from "../../utils/utils";
+import { AxiomAPIRequest, Logger, withAxiom } from "next-axiom";
+import { rateLimit } from "../../utils/utils";
 
 async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
   try {
-    console.log(
+    req.log.info(
       "[api/sampleNotionSocialPost] Starting to create social post for account"
     );
     const body = JSON.parse(req.body);
     const { notionAccessToken, notionDatabaseId, username, platform, color } =
       body;
-    console.log("[api/sampleNotionSocialPost] Parsed data: ", {
+    req.log.info("[api/sampleNotionSocialPost] Parsed data: ", {
       notionAccessToken,
       notionDatabaseId,
       username,
@@ -23,9 +23,9 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
       platform,
       notionAccessToken,
       notionDatabaseId,
-      req
+      req.log
     );
-    console.log(
+    req.log.info(
       "[api/sampleNotionSocialPost] Successfully created the sample social post"
     );
     res.status(200).json({ status: "success" });
@@ -43,23 +43,27 @@ const createSampleSocialPostForAccount = async (
   platform: string,
   notionAccessToken: string,
   notionDatabaseId: string,
-  req: AxiomAPIRequest
+  log: Logger
 ) => {
-  console.log(
+  log.info(
     "[api/sampleNotionSocialPost][createSampleSocialPostForAccount] Starting function: ",
     { username, platform, notionAccessToken, notionDatabaseId }
   );
   if (notionAccessToken && notionDatabaseId) {
-    console.log(
+    log.info(
       "[api/sampleNotionSocialPost][createSampleSocialPostForAccount] Creating notion client"
     );
     const notion = new Client({
       auth: notionAccessToken,
     });
-    console.log(
+    log.info(
       "[api/sampleNotionSocialPost][createSampleSocialPostForAccount] Creating notion page"
     );
-    await rateLimiter();
+
+    const { success } = await rateLimit.notionApi.limit("api");
+
+    if (!success) return;
+
     const response = await notion.pages.create({
       parent: {
         database_id: notionDatabaseId,
@@ -98,7 +102,8 @@ const createSampleSocialPostForAccount = async (
             rich_text: [
               {
                 text: {
-                  content: "Upload the media that you want to post here. Media type of Video requires 1 video, Photo requires 1 photo, Reel supports 1 reel, and Carousel supports up to 10 pieces of media (photo and video mix is allowed).",
+                  content:
+                    "Upload the media that you want to post here. Media type of Video requires 1 video, Photo requires 1 photo, Reel supports 1 reel, and Carousel supports up to 10 pieces of media (photo and video mix is allowed).",
                 },
               },
             ],
@@ -119,7 +124,7 @@ const createSampleSocialPostForAccount = async (
         },
       ],
     });
-    console.log(
+    log.info(
       "[api/sampleNotionSocialPost][createSampleSocialPostForAccount] Successfully created sample notion page: ",
       response
     );

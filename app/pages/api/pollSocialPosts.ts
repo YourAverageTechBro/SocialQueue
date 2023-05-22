@@ -60,7 +60,6 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
             post,
             userId: post.user_id,
           },
-          retries: 0,
         });
         req.log.info(`[api/pollSocialPosts] post ${res.messageId} published.`);
       })
