@@ -6,12 +6,20 @@ import { InstagramPost } from "../../types/supabaseTypes";
 import { Client } from "@notionhq/client";
 import { ListBlockChildrenResponse } from "@notionhq/client/build/src/api-endpoints";
 import { verifySignature } from "@upstash/qstash/nextjs";
+import { rateLimit } from "../../utils/utils";
 
 // TODO: clean up this file with better logging too
 async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
   try {
     if (req.method === "POST") {
       req.log.info("[api/notionPage] Starting POST endpoint");
+
+      const { success } = await rateLimit.notionApi.limit("api");
+      if (!success) {
+        req.log.error(`[api/notionPage] Error: Notion rate limit reached`);
+        res.status(504).end();
+        return;
+      }
 
       const { userId, post } = req.body;
       if (!post) throw Error("No post found in request body");

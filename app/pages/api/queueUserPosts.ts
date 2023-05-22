@@ -258,7 +258,7 @@ const fetchNotionPages = async (
       return handleError(
         req.log,
         `[api/queueUserPosts] Error on fetchNotionPages`,
-        new Error("Rate limit reached"),
+        new Error("Ratelimit"),
         {
           user: JSON.stringify(user),
           timestamp,
