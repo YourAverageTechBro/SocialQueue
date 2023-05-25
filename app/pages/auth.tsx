@@ -30,7 +30,7 @@ function AuthPage() {
           <Auth
             supabaseClient={supabase}
             appearance={{ theme: ThemeSupa }}
-            // onlyThirdPartyProviders={process.env.NODE_ENV === "production"}
+            onlyThirdPartyProviders={process.env.NODE_ENV === "production"}
             providers={["google", "facebook"]}
             redirectTo={`${process.env.NEXT_PUBLIC_BASE_URL}/auth`}
           />
