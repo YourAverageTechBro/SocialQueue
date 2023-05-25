@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Disclosure } from "@headlessui/react";
-import { CreditCardIcon, UserCircleIcon } from "@heroicons/react/24/outline";
-import { useEffect } from "react";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 import SocialAccountSetup from "../../../components/SocialAccountSetup";
-import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { User } from "../../../types/supabaseTypes";
 import { useRouter } from "next/router";
 
@@ -40,7 +39,7 @@ export default function Dashboard() {
 
     const userId = user?.id;
     if (userId) {
-      getUser();
+      void getUser();
     }
   }, [supabase, user]);
 
@@ -92,11 +91,7 @@ export default function Dashboard() {
                 <div className="relative flex h-16 items-center justify-between lg:border-b lg:border-sky-800">
                   <div className="flex items-center px-2 lg:px-0">
                     <div className="flex-shrink-0">
-                      <img
-                        className="block h-8 w-auto"
-                        src="https://tailwindui.com/img/logos/mark.svg?color=teal&shade=400"
-                        alt="Your Company"
-                      />
+                      <p className={"text-white font-bold"}> Social Queue</p>
                     </div>
                   </div>
                 </div>
