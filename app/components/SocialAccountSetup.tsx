@@ -359,7 +359,11 @@ export default function SocialAccountSetup({ loading, setUser, user }: Props) {
         </div>
       )}
       <AccountPickerModal
-        instagramAccounts={potentialInstagramAccounts}
+        instagramAccounts={potentialInstagramAccounts.filter(
+          (account) =>
+            account.instagram_business_account &&
+            account.instagram_business_account.id
+        )}
         open={openAccountPickerModal}
         setOpen={setOpenAccountPickerModal}
         saveUserAccounts={saveUserAccount}
