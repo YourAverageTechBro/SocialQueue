@@ -5,6 +5,10 @@ import fetch from "node-fetch";
 import { Client } from "@notionhq/client";
 import { handleError, rateLimit, supabaseClient } from "../../utils/utils";
 import { PostStatus } from "../../types/supabaseTypes";
+import { Resend } from "resend";
+import SuccessfulPostEmail from "../../emails/SuccessfulPostEmail";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
   try {
@@ -26,6 +30,7 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
       notionAccessToken,
       notionPageId,
       postId,
+      emailAddress,
     } = req.body;
 
     if (
@@ -34,7 +39,8 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
       !facebookAccessToken ||
       !notionAccessToken ||
       !notionPageId ||
-      !postId
+      !postId ||
+      !emailAddress
     ) {
       req.log.error("[api/publishInstagramContainer] Invalid request body", {
         instagramContainerId,
@@ -152,6 +158,13 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
         return;
       }
     }
+
+    await resend.sendEmail({
+      from: "noreply@socialqueue.so",
+      to: emailAddress,
+      subject: "Your Instagram post has been published! 🚀",
+      react: <SuccessfulPostEmail />,
+    });
 
     req.log.info(
       `[api/publishInstagramContainer] Completed publishInstagramContainer endpoint`,

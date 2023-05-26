@@ -18,7 +18,7 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
       .from("InstagramPosts")
       .select(
         `access_token, id, instagram_account_id, instagram_container_id, notion_page_id,
-        Users(notion_access_token)`
+        Users(notion_access_token, email)`
       )
       .eq("status", PostStatus.QUEUED)
       .neq("instagram_container_id", null);
@@ -44,11 +44,14 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
 
         const user = post.Users;
         let notionAccessToken = "";
+        let emailAddress = "";
         if (!user) return;
         if (Array.isArray(user)) {
           notionAccessToken = user[0].notion_access_token;
+          emailAddress = user[0].email;
         } else {
           notionAccessToken = user.notion_access_token;
+          emailAddress = user.email;
         }
         if (!notionAccessToken) return;
 
@@ -60,6 +63,11 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
             "[api/pollInstagramContainers] Instagram container id not found"
           );
         }
+
+        if (!emailAddress) {
+          throw Error("[api/pollInstagramContainers] Email address not found");
+        }
+
         const res = await qStashClient.publishJSON({
           url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/publishInstagramContainer?apiKey=${process.env.API_KEY}`,
           // or topic: "the name or id of a topic"
@@ -70,6 +78,7 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
             notionAccessToken,
             notionPageId,
             postId,
+            emailAddress,
           },
           retries: 0,
         });
