@@ -11,6 +11,7 @@ import {
 } from "../utils/facebookSdk";
 import { log } from "next-axiom";
 import LoadingSpinner from "./LoadingSpinner";
+import Link from "next/link";
 
 type Props = {
   setUser: Dispatch<SetStateAction<User | undefined>>;
@@ -39,7 +40,7 @@ export default function SocialAccountSetup({ loading, setUser, user }: Props) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    router.push("/");
+    void router.push("/");
   };
 
   const deleteSocialAccount = async (socialAccountId: number) => {
@@ -281,12 +282,21 @@ export default function SocialAccountSetup({ loading, setUser, user }: Props) {
             Add SocialQueue to your Notion
           </h3>
           <h3 className="text-md">
-            {" "}
-            Make sure to add the developer provided template into your Notion{" "}
+            Follow the instructions below to add SocialQueue to Notion
           </h3>
+          <Link
+            className="rounded-md bg-indigo-50 px-3.5 py-2.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100 text-center"
+            target="_blank"
+            href={
+              "https://luxurious-flat-431.notion.site/How-to-set-up-SocialQueue-5da1f877dcdc4840b4737c3df44a75e4"
+            }
+            rel="noopener noreferrer"
+          >
+            View Setup Tutorial
+          </Link>
           <button
             type="button"
-            className="inline-flex justify-center items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 mt-4 w-48"
+            className="inline-flex justify-center items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 mt-4"
             onClick={() => {
               window.location.href =
                 process.env.NEXT_PUBLIC_NOTION_REDIRECT_URL ?? "";
