@@ -90,6 +90,15 @@ function MobileNavigation({ isLandingPage }: { isLandingPage: Boolean }) {
               {" "}
               Star us on Github <StarIcon className={"h-6 w-6"} />
             </MobileLink>
+            <MobileLink href={"https://discord.gg/urndgj94Gw"}>
+              {" "}
+              Join the Discord for support
+            </MobileLink>
+            <MobileLink
+              href={"https://youraveragetechbro.canny.io/social-queue"}
+            >
+              Request a feature
+            </MobileLink>
             <hr className="m-2 border-slate-300/40" />
             {isSignedIn ? (
               <Link href="/dashboard/profile">
@@ -148,6 +157,19 @@ export function Header({ isLandingPage = false }: Props) {
               >
                 {" "}
                 Star us on Github <StarIcon className={"h-6 w-6"} />
+              </Link>
+              <Link
+                href={"https://discord.gg/urndgj94Gw"}
+                className="inline-flex items-center rounded-lg px-2 py-1 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+              >
+                {" "}
+                Join the Discord for support
+              </Link>
+              <Link
+                href={"https://youraveragetechbro.canny.io/social-queue"}
+                className="inline-flex items-center rounded-lg px-2 py-1 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+              >
+                Request a feature
               </Link>
             </div>
           </div>
