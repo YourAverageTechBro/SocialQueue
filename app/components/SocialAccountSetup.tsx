@@ -237,15 +237,6 @@ export default function SocialAccountSetup({ loading, setUser, user }: Props) {
 
   return (
     <div className="flex p-4 h-full">
-      <style global jsx>{`
-        html,
-        body,
-        body > div:first-child,
-        div#__next,
-        div#__next > div {
-          height: 100%;
-        }
-      `}</style>
       <BackgroundGradient />
       {loading && (
         <LoadingSpinner styleOverride="flex justify-center items-center w-full" />
@@ -282,7 +273,7 @@ export default function SocialAccountSetup({ loading, setUser, user }: Props) {
         </div>
       )}
       {!loading && user?.notion_duplicated_template_id && (
-        <div className="flex flex-col justify-center w-full">
+        <div className="flex flex-col justify-center items-center w-full">
           <div className="bg-green-200 rounded-lg px-8 py-16">
             <p className="font-bold">
               {" "}
