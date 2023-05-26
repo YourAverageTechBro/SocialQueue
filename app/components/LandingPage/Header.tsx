@@ -44,7 +44,7 @@ function MobileNavIcon({ open }: { open: boolean }) {
   );
 }
 
-function MobileNavigation() {
+function MobileNavigation({ isLandingPage }: { isLandingPage: Boolean }) {
   const user = useUser();
   const isSignedIn = user !== null;
 
@@ -81,7 +81,9 @@ function MobileNavigation() {
             as="div"
             className="absolute inset-x-0 top-full mt-4 flex origin-top flex-col rounded-2xl bg-white p-4 text-lg tracking-tight text-slate-900 shadow-xl ring-1 ring-slate-900/5"
           >
-            <MobileLink href="#features">Features</MobileLink>
+            {isLandingPage && (
+              <MobileLink href="#features">Features</MobileLink>
+            )}
             <MobileLink
               href={"https://github.com/YourAverageTechBro/SWEProjects"}
             >
@@ -103,7 +105,10 @@ function MobileNavigation() {
   );
 }
 
-export function Header() {
+type Props = {
+  isLandingPage: Boolean;
+};
+export function Header({ isLandingPage = false }: Props) {
   const user = useUser();
   const isSignedIn = user !== null;
 
@@ -121,12 +126,22 @@ export function Header() {
               <Image src={logo} alt="" width={150} height={32} unoptimized />
             </Link>
             <div className="hidden md:flex md:gap-x-6">
-              <Link
-                href="#features"
-                className="inline-flex items-center rounded-lg px-2 py-1 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-              >
-                Features
-              </Link>
+              {!isLandingPage && (
+                <Link
+                  href="/dashboard/profile"
+                  className="inline-flex items-center rounded-lg px-2 py-1 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Social Accounts
+                </Link>
+              )}
+              {isLandingPage && (
+                <Link
+                  href="#features"
+                  className="inline-flex items-center rounded-lg px-2 py-1 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Features
+                </Link>
+              )}
               <Link
                 href={"https://github.com/YourAverageTechBro/SocialQueue"}
                 className="inline-flex items-center rounded-lg px-2 py-1 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
@@ -136,7 +151,7 @@ export function Header() {
               </Link>
             </div>
           </div>
-          <div className="flex items-center gap-x-5 md:gap-x-8">
+          <div className="md:flex items-center gap-x-5 md:gap-x-8 hidden">
             {isSignedIn ? (
               <Link href="/dashboard/profile">
                 <span
@@ -150,9 +165,9 @@ export function Header() {
             ) : (
               <Link href={"/auth"}>Sign up</Link>
             )}
-            <div className="-mr-1 md:hidden">
-              <MobileNavigation />
-            </div>
+          </div>
+          <div className="-mr-1 md:hidden">
+            <MobileNavigation isLandingPage={isLandingPage} />
           </div>
         </nav>
       </Container>

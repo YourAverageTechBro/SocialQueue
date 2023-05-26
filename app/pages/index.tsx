@@ -26,7 +26,7 @@ export default function Home() {
           sharing with the world.`}
         />
       </Head>
-      <Header />
+      <Header isLandingPage={true} />
       <main>
         <Hero />
         <PrimaryFeatures />
