@@ -24,7 +24,10 @@ export function Hero() {
           Get Started
         </Link>
       </div>
-      <div className="mt-20 lg:mt-24"></div>
+      <p className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-blue-600 font-bold">
+        We are currently in a Beta phase, so please be patient with us as we
+        work out the kinks!🙏
+      </p>
     </Container>
   );
 }
