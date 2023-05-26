@@ -284,20 +284,16 @@ export default function SocialAccountSetup({ loading, setUser, user }: Props) {
           <h3 className="text-md">
             Follow the instructions below to add SocialQueue to Notion
           </h3>
-          <button
-            type="button"
-            className="rounded-md bg-indigo-50 px-3.5 py-2.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100"
+          <Link
+            className="rounded-md bg-indigo-50 px-3.5 py-2.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100 text-center"
+            target="_blank"
+            href={
+              "https://luxurious-flat-431.notion.site/How-to-set-up-SocialQueue-5da1f877dcdc4840b4737c3df44a75e4"
+            }
+            rel="noopener noreferrer"
           >
-            <Link
-              target="_blank"
-              href={
-                "https://thomasdohyunkim.notion.site/How-To-Set-Up-Social-Queue-202f700b13854349bf6c21a1c315f0e7"
-              }
-              rel="noopener noreferrer"
-            >
-              View Setup Tutorial
-            </Link>
-          </button>
+            View Setup Tutorial
+          </Link>
           <button
             type="button"
             className="inline-flex justify-center items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 mt-4"
