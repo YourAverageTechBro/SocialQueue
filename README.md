@@ -10,6 +10,9 @@ Full instructions on how to set up Social Queue [here]([url](https://luxurious-f
 
 We are built on top of [Vercel]([url](https://youraveragetechbro.canny.io/social-queue)), [NextJS]([url](https://nextjs.org)), [Supabase]([url](https://supabase.com/)), and [Upstash]([url](https://upstash.com/)).
 
+Screenshot below on how it works: 
+<img width="1296" alt="Screenshot 2023-05-27 at 3 28 07 PM" src="https://github.com/YourAverageTechBro/SocialQueue/assets/94861246/98db39e0-8f79-412c-9459-09382e6aecc4">
+
 ## Need Help?
 
 Join [the Discord](https://discord.gg/urndgj94Gw) for any help
