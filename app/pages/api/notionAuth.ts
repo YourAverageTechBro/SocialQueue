@@ -2,7 +2,7 @@ import {
   createServerSupabaseClient,
   SupabaseClient,
 } from "@supabase/auth-helpers-nextjs";
-import { withAxiom, AxiomAPIRequest } from "next-axiom";
+import { AxiomAPIRequest, withAxiom } from "next-axiom";
 import type { NextApiResponse } from "next";
 import fetch from "node-fetch";
 
@@ -87,7 +87,7 @@ const authenticateWithNotion = async (
       body: JSON.stringify({
         grant_type: "authorization_code",
         code: code,
-        redirect_uri: `${process.env.NEXT_PUBLIC_NOTION_REDIRECT_BASE_URL}/dashboard/profile`,
+        redirect_uri: `${process.env.NEXT_PUBLIC_NOTION_REDIRECT_BASE_URL}/notionAuthRedirect`,
       }),
     });
     console.log(
