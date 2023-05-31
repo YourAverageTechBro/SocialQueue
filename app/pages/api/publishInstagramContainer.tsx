@@ -107,6 +107,13 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
         return;
       }
 
+      await resend.sendEmail({
+        from: "noreply@socialqueue.so",
+        to: emailAddress,
+        subject: "Your Instagram post has been published! 🚀",
+        react: <SuccessfulPostEmail />,
+      });
+
       const { error: updateNotionPageStatusError } =
         await updateNotionPageStatusToPosted(
           notionAccessToken,
@@ -158,13 +165,6 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
         return;
       }
     }
-
-    await resend.sendEmail({
-      from: "noreply@socialqueue.so",
-      to: emailAddress,
-      subject: "Your Instagram post has been published! 🚀",
-      react: <SuccessfulPostEmail />,
-    });
 
     req.log.info(
       `[api/publishInstagramContainer] Completed publishInstagramContainer endpoint`,
@@ -466,10 +466,11 @@ const updatePageStatusToPosted = async (postId: string, log: Logger) => {
       }
     );
 
-    const { error } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from("InstagramPosts")
       .update({ status: PostStatus.PUBLISHED })
-      .eq("id", postId);
+      .eq("id", postId)
+      .select();
 
     if (error) {
       return handleError(
@@ -486,6 +487,7 @@ const updatePageStatusToPosted = async (postId: string, log: Logger) => {
       `[api/publishInstagramContainer][updatePageStatusToPosted] Completed updatePageStatusToPosted `,
       {
         postId,
+        data: JSON.stringify(data),
       }
     );
     return { error: null };
