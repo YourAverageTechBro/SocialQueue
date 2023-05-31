@@ -37,8 +37,7 @@ async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
       .select("*")
       .lte("time_to_post", upperBoundTime)
       .gte("time_to_post", lowerBoundTime)
-      .eq("status", PostStatus.QUEUED)
-      .eq("instagram_container_id", null);
+      .eq("status", PostStatus.QUEUED);
 
     req.log.info(`[api/pollSocialPosts] Fetched queued posts from Supabase`, {
       data: JSON.stringify(data),
