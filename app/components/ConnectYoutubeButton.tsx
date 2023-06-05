@@ -13,7 +13,6 @@ export default function ConnectYoutubeButton({ userId }: Props) {
       );
       const json = await resp.json();
       if (json.error) {
-        // TODO: Add error handling
         log.error(`Add youtube account failed`);
         toast.error(
           "Sorry, something went wrong saving your account. We're actively looking into fixing it."
