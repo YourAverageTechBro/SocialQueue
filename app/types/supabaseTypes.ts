@@ -53,5 +53,6 @@ export enum InstagramMediaType {
 }
 
 export enum SocialMediaPlatform {
-  INSTAGRAM = "INSTAGRAM",
+  INSTAGRAM = "instagram",
+  YOUTUBE = "youtube",
 }

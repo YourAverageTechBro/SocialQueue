@@ -2,10 +2,11 @@ import {
   createServerSupabaseClient,
   SupabaseClient,
 } from "@supabase/auth-helpers-nextjs";
-import { withAxiom, AxiomAPIRequest } from "next-axiom";
+import { AxiomAPIRequest, withAxiom } from "next-axiom";
 import type { NextApiResponse } from "next";
 import fetch from "node-fetch";
 import { InstagramAccount } from "../../utils/facebookSdk";
+import { SocialMediaPlatform } from "../../types/supabaseTypes";
 
 async function handler(req: AxiomAPIRequest, res: NextApiResponse) {
   try {
@@ -179,7 +180,7 @@ const savePermanentPageAccessToken = async (
     );
     const { error } = await supabaseServerClient.from("SocialAccounts").insert({
       social_id: instagramBusinessAccountId,
-      social_platform: "instagram",
+      social_platform: SocialMediaPlatform.INSTAGRAM,
       access_token: permanentPageAccessToken,
       user_id: userId,
       username,
