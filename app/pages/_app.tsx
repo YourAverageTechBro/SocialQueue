@@ -1,3 +1,4 @@
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { Analytics } from "@vercel/analytics/react";
@@ -5,6 +6,7 @@ import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session, SessionContextProvider } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { initFacebookSdk } from "../utils/facebookSdk";
+import { Toaster } from "react-hot-toast";
 
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
@@ -46,15 +48,20 @@ function App({
   }, []);
 
   return (
-    <SessionContextProvider
-      supabaseClient={supabaseClient}
-      initialSession={pageProps.initialSession}
+    <GoogleOAuthProvider
+      clientId={process.env.NEXT_PUBLIC_YOUTUBE_OAUTH_CLIENT_KEY ?? ""}
     >
-      <PostHogProvider client={posthog}>
+      <SessionContextProvider
+        supabaseClient={supabaseClient}
+        initialSession={pageProps.initialSession}
+      >
+        <PostHogProvider client={posthog}>
         <Component {...pageProps} />
         <Analytics />
-      </PostHogProvider>
-    </SessionContextProvider>
+        <Toaster />
+        </PostHogProvider>
+      </SessionContextProvider>
+    </GoogleOAuthProvider>
   );
 }
 
