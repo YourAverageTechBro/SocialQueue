@@ -2,9 +2,24 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { Analytics } from "@vercel/analytics/react";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { SessionContextProvider, Session } from "@supabase/auth-helpers-react";
+import { Session, SessionContextProvider } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { initFacebookSdk } from "../utils/facebookSdk";
+
+import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
+import { useRouter } from "next/router";
+
+// Check that PostHog is client-side (used to handle Next.js SSR)
+if (typeof window !== "undefined") {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "", {
+    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
+    // Enable debug mode in development
+    loaded: (posthog) => {
+      if (process.env.NODE_ENV === "development") posthog.debug();
+    },
+  });
+}
 
 function App({
   Component,
@@ -12,6 +27,7 @@ function App({
 }: AppProps<{
   initialSession: Session;
 }>) {
+  const router = useRouter();
   // Create a new supabase browser client on every first render.
   const [supabaseClient] = useState(() => createBrowserSupabaseClient());
 
@@ -19,13 +35,25 @@ function App({
     initFacebookSdk();
   });
 
+  useEffect(() => {
+    // Track page views
+    const handleRouteChange = () => posthog?.capture("$pageview");
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, []);
+
   return (
     <SessionContextProvider
       supabaseClient={supabaseClient}
       initialSession={pageProps.initialSession}
     >
-      <Component {...pageProps} />
-      <Analytics />
+      <PostHogProvider client={posthog}>
+        <Component {...pageProps} />
+        <Analytics />
+      </PostHogProvider>
     </SessionContextProvider>
   );
 }
