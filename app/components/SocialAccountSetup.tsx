@@ -1,3 +1,4 @@
+import { useFeatureFlagEnabled } from "posthog-js/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
@@ -26,6 +27,7 @@ function _wait(number: number) {
 }
 
 export default function SocialAccountSetup({ loading, setUser, user }: Props) {
+  const isYoutubeButtonEnabled = useFeatureFlagEnabled("enable-youtube-button");
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [potentialInstagramAccounts, setPotentialInstagramAccounts] = useState<
@@ -295,7 +297,7 @@ export default function SocialAccountSetup({ loading, setUser, user }: Props) {
           >
             Connect Your Instagram Accounts
           </button>
-          <ConnectYoutubeButton userId={user.id} />
+          {isYoutubeButtonEnabled && <ConnectYoutubeButton userId={user.id} />}
           <div className="mb-2 border-b-2 pb-2 sm:w-1/2 flex flex-col gap-4">
             {isAddingAccounts && (
               <LoadingSpinner styleOverride="flex justify-start ml-20" />
